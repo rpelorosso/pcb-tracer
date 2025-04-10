@@ -26,7 +26,7 @@ PCB Tracer is an application for analyzing and documenting PCB layouts. It allow
 
 ### On Arch Linux:
 
-Use the `pcb-tracer` package from the AUR.
+Use the `pcb-tracer-git` package from the AUR.
 
 ## Compilation Instructions
 
