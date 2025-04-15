@@ -19,8 +19,7 @@ PCB Tracer is an application for analyzing and documenting PCB layouts. It allow
 - Trace circuit paths with adjustable track width
 - Add and manage component annotations
 - Generate connection lists
-- Support for both JSON and binary file formats
-- Configurable color schemes and display options
+- Configurable color schemes
 
 ## Installing
 
