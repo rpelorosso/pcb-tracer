@@ -17,6 +17,10 @@ PCB Tracer is an application for analyzing and documenting PCB layouts. It allow
 
 ## Installing
 
+### On Windows:
+
+Just download the portable version for Windows from the [releases page](https://github.com/rpelorosso/pcb-tracer/releases/tag/windows).
+
 ### On Arch Linux:
 
 Use the `pcb-tracer-git` package from the AUR.
