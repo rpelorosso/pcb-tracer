@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QIcon>
+#include <QApplication>
 //#include "ConfigDialog.h"
 #include "Config.h"
 #include "ColorBox.h"
@@ -343,12 +344,20 @@ void MainWindow::createToolbarActions()
     connect(zoomOutAction, &QAction::triggered, this, &MainWindow::zoomOut);
     m_toolbar->addAction(zoomOutAction);
 
-    m_flipHAction = new QAction(QIcon::fromTheme("object-flip-horizontal"), "Flip Horizontally", this);
+    m_flipHAction = new QAction(QIcon::fromTheme("object-flip-horizontal", QIcon(":/icons/icons/flip-horizontal.svg")), "Flip Horizontally", this);
     m_flipHAction->setCheckable(true);
     connect(m_flipHAction, &QAction::triggered, m_editor, &Editor::flipHorizontal);
     m_toolbar->addAction(m_flipHAction);
 
-    m_flipVAction = new QAction(QIcon::fromTheme("object-flip-vertical"), "Flip Vertically", this);
+    /*
+    m_flipHAction = new QAction(QIcon::fromTheme("object-flip-horizontal", QApplication::style()->standardIcon(QStyle::SP_ArrowLeft)), "Flip Horizontally", this);
+    m_flipHAction->setCheckable(true);
+    connect(m_flipHAction, &QAction::triggered, m_editor, &Editor::flipHorizontal);
+    m_toolbar->addAction(m_flipHAction);
+*/
+//    m_flipVAction = new QAction(QIcon::fromTheme("object-flip-vertical"), "Flip Vertically", this);
+    m_flipVAction = new QAction(QIcon::fromTheme("object-flip-vertical", QIcon(":/icons/icons/flip-vertical.svg")), "Flip Vertically", this);
+
     m_flipVAction->setCheckable(true);
     connect(m_flipVAction, &QAction::triggered, m_editor, &Editor::flipVertical);
     m_toolbar->addAction(m_flipVAction);
@@ -486,7 +495,8 @@ void MainWindow::showAboutDialog()
     aboutBox.setText("<h2>PCB Tracer</h2> \
                      <p>This tool is designed to aid in reverse engineering, repair, and documentation of printed circuit boards.</p> \
                      <p>Version 1.0</p> \
-                     <p><a href='https://github.com/yourusername/pcb-tracer'>GitHub Repository</a></p>");
+                     <p>Made with with <a href='https://www.qt.io'>QT</a>.</p> \
+                     <p>Pull requests and issues are welcome! <a href='https://github.com/rpelorosso/pcb-tracer'>GitHub Repository</a></p>");
     aboutBox.setStandardButtons(QMessageBox::Ok);
     aboutBox.exec();
 }

@@ -2,19 +2,19 @@
 #include <QScrollBar>
 #include <QTransform>
 #include <QDebug>
-#include <QOpenGLWidget>
+//#include <QOpenGLWidget>
 
 ZoomableGraphicsView::ZoomableGraphicsView(QWidget* parent)
     : QGraphicsView(parent)
 {
-    
+  /*
     QOpenGLWidget *glWidget = new QOpenGLWidget(this);
     setViewport(glWidget);
 
     QSurfaceFormat format;
     format.setSamples(16);  // You can adjust this value (2, 4, 8, 16) for quality vs performance
     glWidget->setFormat(format);
- 
+ */
     // Set rendering hints for better performance
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);

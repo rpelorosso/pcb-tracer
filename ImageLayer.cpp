@@ -29,7 +29,10 @@ ImageLayer::ImageLayer(int id) : QGraphicsPixmapItem(), m_id(id) {
 
 bool ImageLayer::loadImage(const QString& imagePath) {
     m_imagePath = imagePath;
-    QPixmap pixmap(imagePath);
+    QPixmap pixmap;
+    if (!pixmap.load(imagePath)) {
+        qDebug() << "error";
+    }
     if (!pixmap.isNull()) {
         setPixmap(pixmap);
         return true;

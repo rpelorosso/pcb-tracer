@@ -69,6 +69,8 @@ add_executable(pcb_tracer
 	actions/AddComponent.h
 )
 
+qt5_add_resources(RESOURCES resources.qrc)
+
 target_link_libraries(pcb_tracer PRIVATE Qt6::Widgets Qt6::OpenGLWidgets)
 
 install(TARGETS pcb_tracer DESTINATION bin)

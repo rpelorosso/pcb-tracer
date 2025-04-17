@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/icons">
+        <file>icons/flip-horizontal.svg</file>
+        <file>icons/flip-vertical.svg</file>
+    </qresource>
+</RCC>
