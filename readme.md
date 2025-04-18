@@ -1,6 +1,6 @@
 # PCB Tracer
 
-PCB Tracer is an application for analyzing and documenting PCB layouts. It allows users to trace circuit paths, identify components, and generate comprehensive connection lists. This tool is designed to aid in reverse engineering, repair, and documentation of printed circuit boards.
+PCB Tracer is an application for analyzing and documenting PCB layouts. This tool is designed to aid in reverse engineering, repair, and documentation of printed circuit boards.
 
 ![screen0](https://github.com/user-attachments/assets/f8b2fe3f-dae3-4976-bfea-9caabee10899)
 ![screen1](https://github.com/user-attachments/assets/b42f3cee-838d-4a5d-b04b-6c4ed99bfbda)
@@ -16,6 +16,10 @@ PCB Tracer is an application for analyzing and documenting PCB layouts. It allow
 - Configurable color schemes
 
 ## Installing
+
+### On Windows:
+
+Just download the portable version for Windows from the [releases page](https://github.com/rpelorosso/pcb-tracer/releases/tag/windows).
 
 ### On Arch Linux:
 
