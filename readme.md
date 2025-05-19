@@ -21,7 +21,7 @@ This is a work in progress! I'm developing it while working on the schematic for
 
 ### On Windows:
 
-Just download the portable version for Windows from the [releases page](https://github.com/rpelorosso/pcb-tracer/releases/tag/windows).
+Just download the portable version for Windows from the [releases page](https://github.com/rpelorosso/pcb-tracer/releases).
 
 ### On Arch Linux:
 
