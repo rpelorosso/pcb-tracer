@@ -54,9 +54,9 @@ void Component::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
 void Component::remove(QGraphicsScene* scene) {
     for (auto pad : m_pads) {
         scene->removeItem(pad);
-        delete pad;
+        //delete pad;
     }
-    m_pads.clear();
+    //m_pads.clear();
     scene->removeItem(this);
 }
 

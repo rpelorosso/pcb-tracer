@@ -41,6 +41,8 @@ void Sidebar::setupConnections() {
 
     CommunicationHub::instance().subscribe(HubEvent::NODE_MADE_MULTIPLE_LINKS, [this](HubEvent event, const void* data) { this->nodeEventHandler((Node*)data, event); });
     CommunicationHub::instance().subscribe(HubEvent::NODE_MADE_SINGLE_LINK, [this](HubEvent event, const void* data) { this->nodeEventHandler((Node*)data, event); });
+    CommunicationHub::instance().subscribe(HubEvent::NODE_DELETED, [this](HubEvent event, const void* data) { this->nodeEventHandler((Node*)data, event); });
+    
 
     CommunicationHub::instance().subscribe(HubEvent::COMPONENT_CREATED, [this](HubEvent event, const void* data) { this->componentEventHandler((Component*)data, event); });
     CommunicationHub::instance().subscribe(HubEvent::COMPONENT_DELETED, [this](HubEvent event, const void* data) { this->componentEventHandler((Component*)data, event); });
@@ -54,7 +56,7 @@ void Sidebar::setupConnections() {
 
 void Sidebar::onListItemDoubleClicked(QListWidgetItem* item) {
     QVariant data = item->data(Qt::UserRole);
-    qDebug() << "Data type:" << data.typeName();
+    //qDebug() << "Data type:" << data.typeName();
     if (data.canConvert<const Node*>()) {        
         //qDebug() << "Double-clicked on Node";
         const Node* node = data.value<const Node*>();
@@ -106,6 +108,7 @@ void Sidebar::nodeEventHandler(const Node *node, HubEvent event) {
             m_tab2->addItem(listItem);
         }
     } else if (event == HubEvent::NODE_MADE_MULTIPLE_LINKS || event == HubEvent::NODE_DELETED) {
+        //qDebug() << "Node ID: " << node->m_id << " has been deleted";
         auto [_, index] = findItemById(m_tab2, node->m_id);
         //qDebug() << "encontro" << index;
         if (index != -1) {
