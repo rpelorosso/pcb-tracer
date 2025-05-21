@@ -45,7 +45,7 @@ Use the `pcb-tracer-git` package from the AUR.
    mkdir build
    cd build
    ```
-5. Run CMake and compile:
+5. Run CMake and compile. You can pass `-DUSE_OPENGL=ON` to cmake to enable OpenGL support. OpenGL support is broken on Wayland yet, so beware.
    ```
    cmake ..
    make -j$(nproc)
