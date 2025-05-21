@@ -12,8 +12,14 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 COMPONENTS Widgets REQUIRED)
-find_package(Qt6 COMPONENTS OpenGL REQUIRED)
-find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
+
+option(USE_OPENGL "Enable OpenGL support" OFF)
+
+if(USE_OPENGL)
+    add_definitions(-DUSE_OPENGL)
+    find_package(Qt6 COMPONENTS OpenGL REQUIRED)
+    find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
+endif()
 
 add_executable(pcb_tracer
 	main.cpp
@@ -74,6 +80,10 @@ qt_add_resources(pcb_tracer "RESOURCES"
     FILES resources.qrc
 )
 
-target_link_libraries(pcb_tracer PRIVATE Qt6::Widgets Qt6::OpenGLWidgets)
+target_link_libraries(pcb_tracer PRIVATE Qt6::Widgets)
+
+if(USE_OPENGL)
+    target_link_libraries(pcb_tracer PRIVATE Qt6::OpenGLWidgets)
+endif()
 
 install(TARGETS pcb_tracer DESTINATION bin)
