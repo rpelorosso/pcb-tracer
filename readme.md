@@ -55,6 +55,8 @@ Use the `pcb-tracer-git` package from the AUR.
    ./pcb-tracer
    ```
 
+Are you using a different distro and managed to compile it? Please submit a PR with the instructions :) 
+
 ## Usage
 
 1. Launch PCB Tracer
