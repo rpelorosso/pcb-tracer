@@ -8,8 +8,6 @@ class SceneLoader {
 public:
     static bool loadSceneFromJson(const QString& filename);
     static bool saveSceneToJson(const QString& filename);
-    static bool saveSceneToBinary(const QString& filename);
-    static QVariantMap getQVariantMapSceneElements();
     static QJsonObject getSceneElements();
 private:
     SceneLoader() = delete;  // Prevent instantiation
