@@ -68,9 +68,7 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
             CommunicationHub::instance().publish(HubEvent::COMPONENT_CREATED, component);
         }
         
-
         Component::setComponentCount(maxComponentId + 1);
-
 
         // Recreate nodes
         QJsonArray nodesArray = sceneData["nodes"].toArray();
@@ -118,23 +116,23 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
         }
 
         qDebug() << nodes.size() << "nodes loaded";
-/*
+
         // Recreate image layers
         QJsonArray imageLayersArray = sceneData["image_layers"].toArray();
         for (const QJsonValue& imageLayerValue : imageLayersArray) {
             QJsonObject imageData = imageLayerValue.toObject();
-            qDebug() << "id:" << static_cast<LinkSide>(imageData["id"].toInt());
+            //qDebug() << "id:" << static_cast<LinkSide>(imageData["id"].toInt());
             editor->m_guideTool->setImageLayer(static_cast<LinkSide>(imageData["id"].toInt()),
-                                               imageData["image_path"].toString());
+                                               imageData["image_path"].toString());                                           
         }
-                                               */
+                                               
 
         // Load TextNotes
         QJsonArray notesArray = sceneData["notes"].toArray();
         for (const QJsonValue& noteValue : notesArray) {
             QJsonObject noteData = noteValue.toObject();
-            QJsonArray rect = noteData["rect"].toArray();
-            QRectF rectf(rect.at(0).toDouble(), rect.at(1).toDouble(), rect.at(2).toDouble(), rect.at(3).toDouble());
+            QJsonObject rect = noteData["rect"].toObject();
+            QRectF rectf(rect["x"].toDouble(), rect["y"].toDouble(), rect["width"].toDouble(), rect["height"].toDouble());
             TextNote* textNote = new TextNote(rectf, Config::instance()->color(Color::NOTES));
             textNote->m_id = NotesTool::genNoteId();
             textNote->setText(noteData["text"].toString());        
@@ -211,9 +209,18 @@ QJsonObject SceneLoader::getSceneElements() {
 				};
 				nodes.append(nodeData);
 			}
-		}/* else if (auto textNote = dynamic_cast<TextNote*>(item)) {
-			notes.append(textNote->toJsonObject());
-		}*/
+		} else if (auto textNote = dynamic_cast<TextNote*>(item)) {
+            QJsonObject textNoteData;
+            textNoteData["id"] = textNote->m_id;
+            textNoteData["rect"] = QJsonObject{
+                {"x", textNote->rect().x()},
+                {"y", textNote->rect().y()},
+                {"width", textNote->rect().width()},
+                {"height", textNote->rect().height()}
+            };
+            textNoteData["text"] = textNote->m_text;
+            notes.append(textNoteData);
+        }
 	}
 
 	sceneData["components"] = components;
@@ -226,82 +233,11 @@ QJsonObject SceneLoader::getSceneElements() {
 	return sceneData;
 }
 
-QVariantMap SceneLoader::getQVariantMapSceneElements() {
-    QVariantMap sceneData;
-    QVariantList components, links, pads, nodes, imageLayers, notes;
-
-    for (QGraphicsItem* item : Editor::instance()->scene()->items()) {
-        if (auto component = dynamic_cast<Component*>(item)) {
-            QVariantMap componentData;
-            componentData["id"] = component->m_id;
-            componentData["name"] = component->m_name;
-            componentData["position"] = QVariantMap{
-                {"x", component->pos().x()},
-                {"y", component->pos().y()}
-            };
-            
-            QVariantList padsData;
-            for (const auto& pad : component->m_pads) {
-                QVariantMap padData;
-                padData["id"] = pad->m_id;
-                padData["x"] = pad->pos().x();
-                padData["y"] = pad->pos().y();
-                padData["component_id"] = component->m_id;
-                padData["number"] = pad->m_number;
-                padData["name"] = pad->m_name;
-                padsData.append(padData);
-            }
-            componentData["pads"] = padsData;
-            components.append(componentData);
-        } else if (auto link = dynamic_cast<Link*>(item)) {
-            QVariantMap linkData;
-            linkData["id"] = link->m_id;
-            linkData["from_node_id"] = link->fromNode()->m_id;
-            linkData["to_node_id"] = link->toNode()->m_id;
-            linkData["graph_id"] = link->m_graphId;
-            linkData["side"] = LinkSideUtils::toString(link->m_side);
-            linkData["width"] = 2; // link->getWidth();
-            links.append(linkData);
-        } else if (auto imageLayer = dynamic_cast<ImageLayer*>(item)) {
-            QVariantMap imageData;
-            imageData["id"] = static_cast<int>(imageLayer->m_id);
-            imageData["image_path"] = imageLayer->m_imagePath;
-            imageData["position"] = QVariantMap{
-                {"x", imageLayer->pos().x()},
-                {"y", imageLayer->pos().y()}
-            };
-            imageData["opacity"] = imageLayer->opacity();
-            imageLayers.append(imageData);
-        } else if (auto node = dynamic_cast<Node*>(item)) {
-            if (!dynamic_cast<Pad*>(node)) {
-                QVariantMap nodeData;
-                nodeData["id"] = node->m_id;
-                nodeData["position"] = QVariantMap{
-                    {"x", node->pos().x()},
-                    {"y", node->pos().y()}
-                };
-                nodes.append(nodeData);
-            }
-        }
-        /* else if (auto textNote = dynamic_cast<TextNote*>(item)) {
-            notes.append(textNote->toVariantMap());
-        }*/
-    }
-
-    sceneData["components"] = components;
-    sceneData["links"] = links;
-    sceneData["pads"] = pads;
-    sceneData["nodes"] = nodes;
-    sceneData["image_layers"] = imageLayers;
-    sceneData["notes"] = notes;
-
-    return sceneData;
-}
 
 bool SceneLoader::saveSceneToJson(const QString& filename) {
 	QString actualFilename = filename;
-	if (!actualFilename.toLower().endsWith(".pcb.json")) {
-		actualFilename += ".pcb.json";
+	if (!actualFilename.toLower().endsWith(".jpcb")) {
+		actualFilename += ".jpcb";
 	}
 
 	QJsonObject sceneData = SceneLoader::getSceneElements();
@@ -318,38 +254,5 @@ bool SceneLoader::saveSceneToJson(const QString& filename) {
 	} else {
 		qDebug() << "Failed to save scene data to" << actualFilename;
         return false;
-		//showStatusMessage("Failed to save scene data to " + actualFilename);
 	}    
-}
-
-bool SceneLoader::saveSceneToBinary(const QString& filename) {
-    QString actualFilename = filename;
-    if (!actualFilename.toLower().endsWith(".pcb.bin")) {
-        actualFilename += ".pcb.bin";
-    }
-
-    QFile file(actualFilename);
-    if (file.open(QIODevice::WriteOnly)) {
-        QDataStream out(&file);
-        out.setVersion(QDataStream::Qt_5_15);  // Use the latest version or the one you're targeting
-
-        // Write a magic number and version for file format identification
-        out << (quint32)0xA0B0C0D0;
-        out << (qint32)1;  // version 1
-
-        // Get scene data
-        //QJsonObject sceneData = SceneLoader::getSceneElements();
-        QVariant sceneData = SceneLoader::getQVariantMapSceneElements();
-
-        // Write the scene data
-        out << sceneData;
-
-        file.close();
-        qDebug() << "Scene data saved to" << actualFilename;
-        Editor::instance()->m_undoStack.setClean();
-        return true;
-    } else {
-        qDebug() << "Failed to save scene data to" << actualFilename;
-        return false;
-    }
 }

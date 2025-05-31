@@ -9,9 +9,7 @@
 //#include "ConfigDialog.h"
 #include "Config.h"
 #include "ColorBox.h"
-#ifdef ENABLE_JSON_SUPPORT
 #include "SceneLoader.h"
-#endif
 #include "SceneLoaderBinary.h"
 #include "ConfigDialog.h"
 #include "ConnectionAnalyzer.h"
@@ -199,12 +197,9 @@ void MainWindow::newProject() {
 void MainWindow::saveProject()
 {
     if (!m_currentFilePath.isEmpty()) {
-        #ifdef ENABLE_JSON_SUPPORT
-        if (m_currentFilePath.endsWith(".pcb.json", Qt::CaseInsensitive)) {
+        if (m_currentFilePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
             SceneLoader::saveSceneToJson(m_currentFilePath);
-        } else
-        #endif 
-        if (m_currentFilePath.endsWith(".pcb", Qt::CaseInsensitive)) {
+        } else if (m_currentFilePath.endsWith(".pcb", Qt::CaseInsensitive)) {
             SceneLoaderBinary::saveSceneToBinary(m_currentFilePath);        
         }
     } else {
@@ -215,21 +210,13 @@ void MainWindow::saveProject()
 void MainWindow::saveProjectAs()
 {
         QString fileFilter;
-    #ifdef ENABLE_JSON_SUPPORT
-        fileFilter = "PCB Files (*.pcb *.pcb.json);;PCB JSON Files (*.pcb.json);;PCB Binary Files (*.pcb)";
-    #else
-        fileFilter = "PCB Binary Files (*.pcb)";
-    #endif
-
+        fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
         QString filePath = QFileDialog::getSaveFileName(this, "Save PCB work", "", fileFilter);
         if (!filePath.isEmpty()) {
             bool success = false;
-    #ifdef ENABLE_JSON_SUPPORT
-            if (filePath.endsWith(".pcb.json", Qt::CaseInsensitive)) {
+            if (filePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
                 success = SceneLoader::saveSceneToJson(filePath);
-            } else
-    #endif
-            if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
+            } else if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
             success = SceneLoaderBinary::saveSceneToBinary(filePath);
         } else {
             // If no extension was provided, default to .pcb
@@ -265,21 +252,14 @@ void MainWindow::handleLoadProject() {
 
 void MainWindow::loadProject() {
         QString fileFilter;
-    #ifdef ENABLE_JSON_SUPPORT
-        fileFilter = "PCB Files (*.pcb *.pcb.json);;PCB JSON Files (*.pcb.json);;PCB Binary Files (*.pcb)";
-    #else
-        fileFilter = "PCB Binary Files (*.pcb)";
-    #endif
-
+        fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
         QString filePath = QFileDialog::getOpenFileName(this, "Load PCB work", "", fileFilter);
         if (!filePath.isEmpty()) {
             bool success = false;
             Editor::instance()->clean();
-    #ifdef ENABLE_JSON_SUPPORT
-            if (filePath.endsWith(".pcb.json", Qt::CaseInsensitive)) {
+            if (filePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
                 success = SceneLoader::loadSceneFromJson(filePath);
             } else
-    #endif
             if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
             success = SceneLoaderBinary::loadSceneFromBinary(filePath);
         } else {
@@ -349,15 +329,7 @@ void MainWindow::createToolbarActions()
     connect(m_flipHAction, &QAction::triggered, m_editor, &Editor::flipHorizontal);
     m_toolbar->addAction(m_flipHAction);
 
-    /*
-    m_flipHAction = new QAction(QIcon::fromTheme("object-flip-horizontal", QApplication::style()->standardIcon(QStyle::SP_ArrowLeft)), "Flip Horizontally", this);
-    m_flipHAction->setCheckable(true);
-    connect(m_flipHAction, &QAction::triggered, m_editor, &Editor::flipHorizontal);
-    m_toolbar->addAction(m_flipHAction);
-*/
-//    m_flipVAction = new QAction(QIcon::fromTheme("object-flip-vertical"), "Flip Vertically", this);
     m_flipVAction = new QAction(QIcon::fromTheme("object-flip-vertical", QIcon(":/icons/icons/flip-vertical.svg")), "Flip Vertically", this);
-
     m_flipVAction->setCheckable(true);
     connect(m_flipVAction, &QAction::triggered, m_editor, &Editor::flipVertical);
     m_toolbar->addAction(m_flipVAction);

@@ -69,7 +69,6 @@ void NotesTool::startDrawing(QMouseEvent* event) {
     m_startPos = m_editor->mapToScene(event->pos());
     QColor color = Config::instance()->color(Color::NOTES);
     m_currentNote = new TextNote(QRectF(m_startPos, m_startPos), color);
-    m_editor->scene()->addItem(m_currentNote);
     m_currentNote->setParentItem(m_editor->m_layers[LinkSide::NOTES]);
 }
 

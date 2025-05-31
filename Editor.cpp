@@ -158,6 +158,7 @@ void Editor::clean() {
     TrackGraph::setTrackGraphCount(0);
     Link::setLinkCount(0);
     Node::setNodeCount(0);
+    NotesTool::setNoteCount(0);
     Component::setComponentCount(0);
 
     // remove all items
