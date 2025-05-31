@@ -136,7 +136,8 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
             TextNote* textNote = new TextNote(rectf, Config::instance()->color(Color::NOTES));
             textNote->m_id = NotesTool::genNoteId();
             textNote->setText(noteData["text"].toString());        
-            editor->scene()->addItem(textNote);
+            textNote->setParentItem(editor->m_layers[LinkSide::NOTES]);
+
             // Notify about its creation
             CommunicationHub::instance().publish(HubEvent::NOTE_CREATED, textNote);
         }
