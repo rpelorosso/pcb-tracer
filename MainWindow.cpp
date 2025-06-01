@@ -6,7 +6,7 @@
 #include <QMessageBox>
 #include <QIcon>
 #include <QApplication>
-//#include "ConfigDialog.h"
+#include <QTimer>
 #include "Config.h"
 #include "ColorBox.h"
 #include "SceneLoader.h"
@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_windowBaseTitle("PCB Tracer")
     , m_currentFilePath("")
+    , m_changesSinceLastAutosave(false)
+    , m_wasJustAutosaved(false)
 {
     // Create widgets
     QStatusBar* statusBar = new QStatusBar(this);
@@ -147,7 +149,15 @@ MainWindow::MainWindow(QWidget* parent)
     connect(aboutAction, &QAction::triggered, this, &MainWindow::showAboutDialog);
     viewMenu->addAction(aboutAction);
 
+    // Initialize and start the auto-save timer
+    m_autoSaveTimer = new QTimer(this);
+    connect(m_autoSaveTimer, &QTimer::timeout, this, &MainWindow::autoSaveProject);
+    m_autoSaveTimer->start(5 * 60 * 1000); // 5 minutes in milliseconds
 
+    connect(&(m_editor->m_undoStack), &QUndoStack::indexChanged, this, [this]() {
+        m_changesSinceLastAutosave = true; // Mark changes when the undo stack index changes
+        m_wasJustAutosaved = false;
+    });
 }
 
 MainWindow::~MainWindow() {
@@ -179,17 +189,20 @@ void MainWindow::cleanProject() {
     setCurrentFilePath("");
 }
 
-void MainWindow::newProject() {
-
-    if (!Editor::instance()->m_undoStack.isClean()) {
+bool MainWindow::promptForUnsavedChanges() {
+    qDebug() << "was just auto saved" << m_wasJustAutosaved;
+    if (m_wasJustAutosaved || !Editor::instance()->m_undoStack.isClean()) {
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Unsaved Changes",
                                                                   "You have unsaved changes. Do you want to discard them?",
                                                                   QMessageBox::Yes | QMessageBox::No,
                                                                   QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
-            cleanProject();
-        }
-    } else {
+        return reply == QMessageBox::Yes;
+    }
+    return true;
+}
+
+void MainWindow::newProject() {
+    if (promptForUnsavedChanges()) {
         cleanProject();
     }
 }
@@ -197,11 +210,7 @@ void MainWindow::newProject() {
 void MainWindow::saveProject()
 {
     if (!m_currentFilePath.isEmpty()) {
-        if (m_currentFilePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
-            SceneLoader::saveSceneToJson(m_currentFilePath);
-        } else if (m_currentFilePath.endsWith(".pcb", Qt::CaseInsensitive)) {
-            SceneLoaderBinary::saveSceneToBinary(m_currentFilePath);        
-        }
+        saveToFile(m_currentFilePath);
     } else {
         saveProjectAs();
     }
@@ -209,72 +218,110 @@ void MainWindow::saveProject()
 
 void MainWindow::saveProjectAs()
 {
-        QString fileFilter;
-        fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
-        QString filePath = QFileDialog::getSaveFileName(this, "Save PCB work", "", fileFilter);
-        if (!filePath.isEmpty()) {
-            bool success = false;
-            if (filePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
-                success = SceneLoader::saveSceneToJson(filePath);
-            } else if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
-            success = SceneLoaderBinary::saveSceneToBinary(filePath);
-        } else {
-            // If no extension was provided, default to .pcb
-            filePath += ".pcb";
-            success = SceneLoaderBinary::saveSceneToBinary(filePath);
+    QString fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
+    QString filePath = QFileDialog::getSaveFileName(this, "Save PCB work", "", fileFilter);
+    if (!filePath.isEmpty()) {
+        QString oldFilePath = m_currentFilePath;
+        saveToFile(filePath);
+        if(oldFilePath.isEmpty()) {
+            // is we're not coming from a named file, rename the current generic autosave file
+            QString oldAutosavePath = getAutosaveFilePath(oldFilePath);
+            renameToAutosaveFile(oldAutosavePath);    
         }
+    }
+}
 
-        if (success) {
-            setCurrentFilePath(filePath);
+void MainWindow::saveToFile(const QString& filePath, bool isAutoSave)
+{
+    bool success = false;
+    QString actualFilePath = filePath;
+
+    if (actualFilePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
+        success = SceneLoader::saveSceneToJson(actualFilePath);
+    } else if (actualFilePath.endsWith(".pcb", Qt::CaseInsensitive)) {
+        success = SceneLoaderBinary::saveSceneToBinary(actualFilePath);
+    } else {
+        // If no extension was provided, default to .pcb
+        actualFilePath += ".pcb";
+        success = SceneLoaderBinary::saveSceneToBinary(actualFilePath);
+    }
+
+    if (success) {
+        if (!isAutoSave) {            
+            setCurrentFilePath(actualFilePath);
+            m_wasJustAutosaved = false; // so we don't prompt for unsaved changes due to have loaded an autosave
+            Editor::instance()->m_undoStack.setClean();
             m_editor->showStatusMessage("Project saved successfully.");
-            // QMessageBox::information(this, "Save Successful", "The project was saved successfully.");
-        } else {
-            QMessageBox::critical(this, "Save Failed", "Failed to save the project. Please try again.");
         }
+    } else {
+        QMessageBox::critical(this, "Save Failed", "Failed to save the project. Please try again.");
     }
 }
 
 void MainWindow::handleLoadProject() {
-    if (!Editor::instance()->m_undoStack.isClean()) {
-        QMessageBox::StandardButton reply = QMessageBox::question(this, "Unsaved Changes",
-                                                                  "You have unsaved changes. Do you want to discard them?",
-                                                                  QMessageBox::Yes | QMessageBox::No,
-                                                                  QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
-            loadProject();
-        } else {
-            loadProject();
-        }
-    } else {
+    if (promptForUnsavedChanges()) {
         loadProject();
     }
 }
 
-void MainWindow::loadProject() {
-        QString fileFilter;
-        fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
-        QString filePath = QFileDialog::getOpenFileName(this, "Load PCB work", "", fileFilter);
-        if (!filePath.isEmpty()) {
-            bool success = false;
-            Editor::instance()->clean();
-            if (filePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
-                success = SceneLoader::loadSceneFromJson(filePath);
-            } else
-            if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
-            success = SceneLoaderBinary::loadSceneFromBinary(filePath);
-        } else {
-            QMessageBox::warning(this, "Unsupported File", "The selected file format is not supported.");
-            return;
-        }
+bool MainWindow::checkAndLoadAutosave(QString originalFilePath) {
+    QString tempFilePath = getAutosaveFilePath(originalFilePath);
+    qDebug() << "TEMPORAL AUTOSAVE: " << tempFilePath;
+    if (QFile::exists(tempFilePath)) {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "Load Autosaved Version",
+                                                                  "Do you want to load the autosaved version?",
+                                                                  QMessageBox::Yes | QMessageBox::No,
+                                                                  QMessageBox::No);
 
-        if (success) {
-            setCurrentFilePath(filePath);
-            m_editor->showStatusMessage("Project loaded successfully.");
-            // QMessageBox::information(this, "Load Successful", "The project was loaded successfully.");
-        } else {
-            QMessageBox::critical(this, "Load Failed", "Failed to load the project. Please check the file and try again.");
+        if (reply == QMessageBox::Yes) {
+            loadProjectFromFile(tempFilePath, true); // load the autosaved version
+            qDebug() << "HAY UN AUTOSAVE: " << tempFilePath;
+            m_wasJustAutosaved = true;
+            return true; // indicate the user said yes
         }
-    }        
+    }
+    return false; // indicate that no autosave was loaded
+}
+
+void MainWindow::loadProject() {
+    QString fileFilter = "PCB JSON Files (*.jpcb);;PCB Binary Files (*.pcb);;PCB Files (*.pcb *.jpcb)";
+    QString filePath = QFileDialog::getOpenFileName(this, "Load PCB work", "", fileFilter);
+    if (filePath.isEmpty()) {
+        return; // early return if no file is selected
+    }
+
+    if (!checkAndLoadAutosave(filePath)) {
+        // load the original file if no autosave is loaded
+        loadProjectFromFile(filePath);
+    }
+}
+
+void MainWindow::loadProjectFromFile(const QString& filePath, bool isAutoLoad) {
+    bool success = false;
+    Editor::instance()->clean();
+    if (filePath.endsWith(".jpcb", Qt::CaseInsensitive)) {
+        success = SceneLoader::loadSceneFromJson(filePath);
+    } else if (filePath.endsWith(".pcb", Qt::CaseInsensitive)) {
+        success = SceneLoaderBinary::loadSceneFromBinary(filePath);
+    } else {
+        QMessageBox::warning(this, "Unsupported File", "The selected file format is not supported.");
+        return;
+    }
+
+    if (success) {
+        if(!isAutoLoad) {
+            setCurrentFilePath(filePath);
+        } else {
+            // set the currentFilePath to the autosave file path without the~suffix
+            QFileInfo fileInfo(filePath);
+            QString originalFilePath = fileInfo.dir().absoluteFilePath(fileInfo.fileName().mid(1));
+            setCurrentFilePath(originalFilePath);            
+        }
+        m_editor->showStatusMessage("Project loaded successfully.");
+        // QMessageBox::information(this, "Load Successful", "The project was loaded successfully.");
+    } else {
+        QMessageBox::critical(this, "Load Failed", "Failed to load the project. Please check the file and try again.");
+    }
 }
 
 void MainWindow::setFrontSideImage()
@@ -286,8 +333,7 @@ void MainWindow::setFrontSideImage()
 
 }
 
-void MainWindow::setBackSideImage()
-{    
+void MainWindow::setBackSideImage() {    
     QString filePath = QFileDialog::getOpenFileName(this, "Open Image");
     if (!filePath.isEmpty()) {
         m_editor->m_guideTool->setImageLayer(LinkSide::BACK, filePath);
@@ -421,22 +467,15 @@ void MainWindow::setCurrentFilePath(const QString& filePath)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    // If the undo stack is not clean (changes were made), prompt the user
-    if (!m_editor->m_undoStack.isClean()) {
-        QMessageBox::StandardButton reply = QMessageBox::question(this, "Unsaved Changes",
-                                                                  "You have unsaved changes. Do you want to discard them?",
-                                                                  QMessageBox::Yes | QMessageBox::No,
-                                                                  QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
-            event->accept();
-        } else {
-            event->ignore();
-        }
-    } else {
+    if (promptForUnsavedChanges()) {
+        removeAutosaveFile();
         event->accept();
+    } else {
+        event->ignore();
     }
 }
 
+// TODO: check this implementation, sometimes keys are not being captured correctly
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_E && event->modifiers() & Qt::ControlModifier) {
@@ -471,4 +510,50 @@ void MainWindow::showAboutDialog()
                      <p>Pull requests and issues are welcome! <a href='https://github.com/rpelorosso/pcb-tracer'>GitHub Repository</a></p>");
     aboutBox.setStandardButtons(QMessageBox::Ok);
     aboutBox.exec();
+}
+
+
+QString MainWindow::getAutosaveFilePath(QString filePath) {
+    QString tempFilePath;
+    if (!filePath.isEmpty()) {
+        QFileInfo fileInfo(filePath);
+        tempFilePath = fileInfo.dir().absoluteFilePath("~" + fileInfo.fileName());
+    } else {
+        tempFilePath = QDir::currentPath() + "/~autosave.jpcb";
+    }
+    return tempFilePath;
+}
+
+void MainWindow::removeAutosaveFile() {
+    QString tempFilePath = getAutosaveFilePath(m_currentFilePath);
+    // check if it exists before trying to delete it
+    if(QFile::exists(tempFilePath)) {
+        QFile::remove(tempFilePath);
+    }
+}
+
+void MainWindow::renameToAutosaveFile(QString filePath) {
+    QString tempFilePath = getAutosaveFilePath(m_currentFilePath);
+    // check if it exists before trying to delete it
+    if(QFile::exists(filePath)) {
+        QFile::rename(filePath, tempFilePath);
+    }
+}
+
+
+void MainWindow::autoSaveProject() {
+    if (!m_changesSinceLastAutosave) {
+        qDebug() << "No changes to autosave.";
+        return; // don't autosave if there are no changes
+    }
+    QString tempFilePath = getAutosaveFilePath(m_currentFilePath);
+    m_changesSinceLastAutosave = false; // reset the changes flag
+    saveToFile(tempFilePath, true); // save to file as autosave
+}
+
+void MainWindow::showEvent(QShowEvent* event) {
+    QMainWindow::showEvent(event);
+    // Perform actions when the window is first shown
+    qDebug() << "MainWindow is now visible and ready.";
+    checkAndLoadAutosave("");
 }

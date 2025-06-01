@@ -24,6 +24,8 @@ protected:
     void closeEvent(QCloseEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void showEvent(QShowEvent* event) override;    
+
 
 private slots:
     void sliderValueChanged(int value);
@@ -48,6 +50,8 @@ private slots:
     void cleanProject();
     void newProject();
 
+    void autoSaveProject();
+
 private:
     QString m_windowBaseTitle;
     QString m_currentFilePath;
@@ -57,6 +61,9 @@ private:
     QSlider* m_slider;
     ColorBox* m_colorBox;
     Sidebar* m_sidebar;
+    QTimer* m_autoSaveTimer;
+    bool m_changesSinceLastAutosave;
+    bool m_wasJustAutosaved;
 
     QAction* m_addTrackAction;
     QAction* m_addComponentAction;
@@ -66,6 +73,13 @@ private:
     QAction* m_flipHAction;
     QAction* m_flipVAction;
 
+    bool checkAndLoadAutosave(QString originalFilePath);
+    void loadProjectFromFile(const QString& filePath, bool isAutoLoad = false);    
     void createToolbarActions();
     void setCurrentFilePath(const QString& filePath);
+    void saveToFile(const QString& filePath, bool isAutoLoad = false);
+    QString getAutosaveFilePath(QString filePath);
+    bool promptForUnsavedChanges();
+    void removeAutosaveFile();
+    void renameToAutosaveFile(QString filePath);
 };

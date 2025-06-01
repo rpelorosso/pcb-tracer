@@ -250,7 +250,6 @@ bool SceneLoader::saveSceneToJson(const QString& filename) {
 		file.close();
 		qDebug() << "Scene data saved to" << actualFilename;
 		//showStatusMessage("Scene data saved to " + actualFilename);
-		Editor::instance()->m_undoStack.setClean();
         return true;
 	} else {
 		qDebug() << "Failed to save scene data to" << actualFilename;
