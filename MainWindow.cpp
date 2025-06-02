@@ -266,7 +266,6 @@ void MainWindow::handleLoadProject() {
 
 bool MainWindow::checkAndLoadAutosave(QString originalFilePath) {
     QString tempFilePath = getAutosaveFilePath(originalFilePath);
-    qDebug() << "TEMPORAL AUTOSAVE: " << tempFilePath;
     if (QFile::exists(tempFilePath)) {
         QMessageBox::StandardButton reply = QMessageBox::question(this, "Load Autosaved Version",
                                                                   "Do you want to load the autosaved version?",
@@ -275,7 +274,6 @@ bool MainWindow::checkAndLoadAutosave(QString originalFilePath) {
 
         if (reply == QMessageBox::Yes) {
             loadProjectFromFile(tempFilePath, true); // load the autosaved version
-            qDebug() << "HAY UN AUTOSAVE: " << tempFilePath;
             m_wasJustAutosaved = true;
             return true; // indicate the user said yes
         }
