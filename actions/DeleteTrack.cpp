@@ -5,6 +5,7 @@
 #include "../ZoomableGraphicsView.h"
 #include "../Link.h"
 #include "AddTrack.h" // GraphIdChange
+#include "../Component.h"
 
 DeleteTrack::DeleteTrack(ZoomableGraphicsView* scene, const DeleteTrackMeta& meta)
     : m_editor(Editor::instance()), m_scene(scene->scene()), m_meta(meta) {
@@ -15,8 +16,8 @@ DeleteTrack::DeleteTrack(ZoomableGraphicsView* scene, const DeleteTrackMeta& met
 
     m_splitAnalysis = checkGraphSplit();
 
-    m_deleteToNode = m_link->toNode()->getGrade() == 1;
-    m_deleteFromNode = m_link->fromNode()->getGrade() == 1;
+    m_deleteToNode = (m_link->toNode()->getGrade() == 1) && (dynamic_cast<Pad*>(m_link->toNode()) == nullptr);
+    m_deleteFromNode = (m_link->fromNode()->getGrade() == 1) && (dynamic_cast<Pad*>(m_link->fromNode()) == nullptr);
 
     calculateGraphIds();
 }
