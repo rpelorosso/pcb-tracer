@@ -19,7 +19,7 @@ Editor* Editor::instance(QWidget* parent) {
 Editor::Editor(QWidget* parent) : ZoomableGraphicsView(parent) {
     m_scene = new QGraphicsScene(this);
     setScene(m_scene);
-	//m_scene->setBackgroundBrush(QBrush(QColor(240, 240, 240))); // Light gray color
+	m_scene->setBackgroundBrush(QBrush(QColor(28, 30, 32)));
 
     setMouseTracking(true);
 
