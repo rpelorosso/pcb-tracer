@@ -29,8 +29,8 @@
 #include "QGraphicsItemLayer.h"
 #include "ColorBox.h"
 #include "GuideTool.h"
+#include "TrackDrawingTool.h"
 
-class TrackDrawingTool;
 class ComponentDrawingTool;
 class NotesTool;
 
@@ -60,6 +60,7 @@ public:
 	void loadSceneFromJson(const QString& filename);
 	void setStatusBar(QStatusBar* statusBar);
 	void clean();
+	TrackDrawingTool *getTrackDrawingTool();
 
 	int padSize;
 	LinkSide m_currentSide;

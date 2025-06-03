@@ -35,8 +35,6 @@ AddTrack::AddTrack(const TrackCreationMeta& meta)
             m_split_link_meta["new_link_b"] = QVariant::fromValue(new Link(Link::genLinkId()));
             m_split_link_meta["delete_link"] = QVariant::fromValue((Link*)m_meta.m_to_item);
             m_is_split_link = true; // maybe the map could be an optional so we can avoid using this
-            qDebug() << "is a link" << m_split_link_meta;
-            qDebug() <<  "meta.m_to_item" << m_meta.m_to_item;
 
         }
     }
@@ -45,11 +43,9 @@ AddTrack::AddTrack(const TrackCreationMeta& meta)
 
     calculateGraphIds();
 
-    qDebug() << "calculated:" << m_new_graph_ids.size();
 }
 
 AddTrack::~AddTrack() {
-    qDebug() << "AddTrack::~AddTrack()";
     if (m_created_from_node) {
         delete m_from_node;
     }
@@ -97,7 +93,6 @@ void AddTrack::undo() {
         if (link_to_change) {
             link_to_change->setGraphId(item.m_old_graph_id);
             link_to_change->updateTextItem(QString::number(item.m_old_graph_id));
-            qDebug() << "changing" << link_to_change;
         }
     }
 
@@ -107,6 +102,19 @@ void AddTrack::undo() {
     if (!m_created_to_node) {
         m_to_node->notifyLinkChanges();
     }
+
+    // make the editor start drawing a link from the start position or element of the removed track
+    Editor *editor = Editor::instance();
+    TrackDrawingTool *trackDrawingTool = editor->getTrackDrawingTool();        
+    trackDrawingTool->m_drawingLineFromPos = m_meta.m_from_position;
+    if(m_created_from_node) {
+        trackDrawingTool->m_drawingLineFrom = nullptr;
+    } else {
+        trackDrawingTool->m_drawingLineFrom = m_from_node;
+    }
+
+    editor->m_tracingIndicator->setLine(trackDrawingTool->m_drawingLineFromPos.x(), trackDrawingTool->m_drawingLineFromPos.y(), trackDrawingTool->m_lastDraggedPosition.x(), trackDrawingTool->m_lastDraggedPosition.y());
+
 }
 
 void AddTrack::redo() {
@@ -168,6 +176,19 @@ void AddTrack::redo() {
     // both were created or existing, but either way they had their number of links changed
     m_to_node->notifyLinkChanges();
     m_from_node->notifyLinkChanges();
+
+
+    // make the editor start drawing a link from the ending position or element of the added track
+    Editor *editor = Editor::instance();
+    TrackDrawingTool *trackDrawingTool = editor->getTrackDrawingTool();        
+    trackDrawingTool->m_drawingLineFromPos = m_meta.m_to_position;
+    if(m_created_to_node) {
+        trackDrawingTool->m_drawingLineFrom = nullptr;
+    } else {
+        trackDrawingTool->m_drawingLineFrom = m_to_node;
+    }
+    editor->m_tracingIndicator->setLine(trackDrawingTool->m_drawingLineFromPos.x(), trackDrawingTool->m_drawingLineFromPos.y(), trackDrawingTool->m_lastDraggedPosition.x(), trackDrawingTool->m_lastDraggedPosition.y());
+
 }
 
 void AddTrack::calculateGraphIds() {
@@ -186,8 +207,6 @@ void AddTrack::calculateGraphIds() {
                 b.push_back(link->m_graphId);
             }
         }
-
-        qDebug() << "uno nodo con a =" << a << "a nodos con b =" << b;
 
         std::optional<int> max_graph_id, min_graph_id;
 
@@ -240,13 +259,6 @@ void AddTrack::calculateGraphIds() {
                 .m_old_graph_id=m_split_link_meta["new_link_b"].value<Link*>()->m_graphId,
                 .m_new_graph_id=max_graph_id.value()//+
             });  
-            qDebug() << "IS SPLIT";
-            qDebug() << "m_old_graph_ids:";
-            for (const auto& change : m_old_graph_ids) {
-                qDebug() << "  Link ID:" << change.m_link_id
-                         << "Old Graph ID:" << change.m_old_graph_id
-                         << "New Graph ID:" << change.m_new_graph_id;
-            }
  
             for (auto item : m_scene->items()) {
                 if (auto link = dynamic_cast<Link*>(item)) {
@@ -271,11 +283,11 @@ void AddTrack::calculateGraphIds() {
             self.old_graph_ids.append({"link_id": item.id, "old_graph_id": item.graph_id})
 */
 
-        qDebug() << "##########################################";
+        // qDebug() << "##########################################";
         // print the content of m_new_graph_ids
-        for (const auto& item : m_new_graph_ids) {
-            qDebug() << "link_id =" << item.m_link_id << " old_graph_id =" << item.m_old_graph_id << " new_graph_id =" << item.m_new_graph_id;
-        }
+        // for (const auto& item : m_new_graph_ids) {
+        //    qDebug() << "link_id =" << item.m_link_id << " old_graph_id =" << item.m_old_graph_id << " new_graph_id =" << item.m_new_graph_id;
+        //}
 
     }
         

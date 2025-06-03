@@ -551,7 +551,5 @@ void MainWindow::autoSaveProject() {
 
 void MainWindow::showEvent(QShowEvent* event) {
     QMainWindow::showEvent(event);
-    // Perform actions when the window is first shown
-    qDebug() << "MainWindow is now visible and ready.";
     checkAndLoadAutosave("");
 }

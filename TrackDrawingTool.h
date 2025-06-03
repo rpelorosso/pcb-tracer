@@ -6,11 +6,12 @@
 #include <QMessageBox>
 #include <QPoint>
 #include <QUndoStack>
-#include "Editor.h"
 #include "Link.h"
 #include "Node.h"
 #include "enums.h"
 #include "IEditorTool.h"
+
+class Editor;
 
 class TrackDrawingTool : public IEditorTool
 {
@@ -27,14 +28,15 @@ public:
     QPointF m_lastDraggedPosition;
     void clean();
 
+    QGraphicsItem* m_drawingLineFrom;
+    QPointF m_drawingLineFromPos;
+
 private:
     void startDrawing(QMouseEvent* event);
     void closeDrawing(QMouseEvent* event);
     void toggleHighlightSubCircuit(int graphId, bool isHighlighted);
 
     Editor* m_editor;
-    QGraphicsItem* m_drawingLineFrom;
-    QPointF m_drawingLineFromPos;
     bool m_drawing;
     QGraphicsItem* m_selectedItem;
     int m_highlighted_sub_circuit;

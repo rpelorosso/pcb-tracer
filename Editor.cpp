@@ -202,3 +202,7 @@ void Editor::enterNotesMode() {
 	m_state = DrawingState::NOTES;
 	setCurrentTool(m_notesTool);
 }
+
+TrackDrawingTool *Editor::getTrackDrawingTool() {
+    return m_trackDrawingTool;
+}

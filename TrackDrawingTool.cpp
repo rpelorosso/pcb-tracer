@@ -186,6 +186,10 @@ void TrackDrawingTool::closeDrawing(QMouseEvent* event)
     m_drawing = false;
     QGraphicsItem* item = m_editor->itemAt(event->pos());
     
+
+    qDebug() << "drawing started from position:" << m_drawingLineFromPos;
+    qDebug() << "drawing started from item:" << m_drawingLineFrom;
+
     if (!isDynamicCastableToAny<Node, Link, Pad>(item))
     {
         item = nullptr;
@@ -233,8 +237,8 @@ void TrackDrawingTool::closeDrawing(QMouseEvent* event)
 
     AddTrack* action = new AddTrack(meta);
     Editor::instance()->m_undoStack.push(action);
-    m_drawingLineFromPos = endingPoint;
-    m_drawingLineFrom = action->m_to_node;
+    //m_drawingLineFromPos = endingPoint;
+    //m_drawingLineFrom = action->m_to_node;
 }
 
 void TrackDrawingTool::toggleHighlightSubCircuit(int graphId, bool isHighlighted)
