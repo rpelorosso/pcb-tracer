@@ -183,9 +183,9 @@ void AddTrack::redo() {
     TrackDrawingTool *trackDrawingTool = editor->getTrackDrawingTool();        
     trackDrawingTool->m_drawingLineFromPos = m_meta.m_to_position;
     if(m_created_to_node) {
-        trackDrawingTool->m_drawingLineFrom = nullptr;
-    } else {
         trackDrawingTool->m_drawingLineFrom = m_to_node;
+    } else {
+        trackDrawingTool->m_drawingLineFrom = nullptr;
     }
     editor->m_tracingIndicator->setLine(trackDrawingTool->m_drawingLineFromPos.x(), trackDrawingTool->m_drawingLineFromPos.y(), trackDrawingTool->m_lastDraggedPosition.x(), trackDrawingTool->m_lastDraggedPosition.y());
 
