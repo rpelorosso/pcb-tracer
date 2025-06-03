@@ -24,6 +24,12 @@ void AddComponent::undo()
     // Delete the component
     m_component->remove(m_scene);
     CommunicationHub::instance().publish(HubEvent::COMPONENT_DELETED, m_component);
+
+    // prevent trying to draw a line from the deleted component
+    Editor *editor = Editor::instance();
+    TrackDrawingTool *trackDrawingTool = editor->getTrackDrawingTool();        
+    trackDrawingTool->m_drawingLineFrom = nullptr;
+
 }
 
 void AddComponent::redo()
