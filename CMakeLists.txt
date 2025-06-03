@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(pcb_tracer)
+project(pcb-tracer)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
@@ -21,7 +21,7 @@ if(USE_OPENGL)
     find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
 endif()
 
-add_executable(pcb_tracer
+add_executable(pcb-tracer
 	main.cpp
 	Sidebar.cpp
 	Sidebar.h
@@ -75,15 +75,15 @@ add_executable(pcb_tracer
 	actions/AddComponent.h
 )
 
-qt_add_resources(pcb_tracer "RESOURCES"
+qt_add_resources(pcb-tracer "RESOURCES"
     PREFIX "/"
     FILES resources.qrc
 )
 
-target_link_libraries(pcb_tracer PRIVATE Qt6::Widgets)
+target_link_libraries(pcb-tracer PRIVATE Qt6::Widgets)
 
 if(USE_OPENGL)
     target_link_libraries(pcb_tracer PRIVATE Qt6::OpenGLWidgets)
 endif()
 
-install(TARGETS pcb_tracer DESTINATION bin)
+install(TARGETS pcb-tracer DESTINATION bin)
