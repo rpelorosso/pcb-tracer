@@ -12,7 +12,7 @@ This is a work in progress! I'm developing it while working on the schematic for
 ## Features
 
 - Load and display PCB images (front and back sides)
-- Trace circuit paths with adjustable track width
+- Autosaving
 - Add and manage component annotations
 - Generate connection lists
 - Configurable color schemes
