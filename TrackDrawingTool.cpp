@@ -194,9 +194,9 @@ void TrackDrawingTool::closeDrawing(QMouseEvent* event)
     {
         item = nullptr;
         qDebug() << "drawing stopped at" << item;
-    }
+    } 
     
-    if (dynamic_cast<Node*>(item) && m_drawingLineFrom && dynamic_cast<Node*>(item)->m_id == dynamic_cast<Node*>(m_drawingLineFrom)->m_id)
+    if (dynamic_cast<Node*>(item) && dynamic_cast<Node*>(m_drawingLineFrom) && m_drawingLineFrom && dynamic_cast<Node*>(item)->m_id == dynamic_cast<Node*>(m_drawingLineFrom)->m_id)
     {
         item = nullptr;
     }
