@@ -8,7 +8,7 @@ int Node::node_count = 0;
 
 Node::Node(int id) : QGraphicsEllipseItem(), m_id(id), m_size(0), m_side(LinkSide::FRONT), m_links()  {
     Editor* editor = Editor::instance();
-    m_size = 20; // editor->padSize();
+    m_size = 10; // editor->padSize();
 
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemSendsGeometryChanges);
 
@@ -192,6 +192,10 @@ void Node::refresh() {
     }
 }
 
+
+void Node::setSize(int size) {
+    setRect(-size/2, -size/2, size, size);
+}
 void Node::setColor(Color color) {
     int size = m_size.has_value() ? m_size.value() : Config::instance()->m_padSize;
     setRect(-size/2, -size/2, size, size);

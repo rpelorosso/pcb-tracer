@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
-project(pcb-tracer)
+project(pcb_tracer)
 
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Widgets SvgWidgets REQUIRED)
 
 option(USE_OPENGL "Enable OpenGL support" OFF)
 
@@ -21,7 +21,7 @@ if(USE_OPENGL)
     find_package(Qt6 COMPONENTS OpenGLWidgets REQUIRED)
 endif()
 
-add_executable(pcb-tracer
+add_executable(pcb_tracer
 	main.cpp
 	Sidebar.cpp
 	Sidebar.h
@@ -73,17 +73,13 @@ add_executable(pcb-tracer
 	actions/AssignSideToTrack.h
 	actions/AddComponent.cpp
 	actions/AddComponent.h
+	resources.qrc
 )
 
-qt_add_resources(pcb-tracer "RESOURCES"
-    PREFIX "/"
-    FILES resources.qrc
-)
-
-target_link_libraries(pcb-tracer PRIVATE Qt6::Widgets)
+target_link_libraries(pcb_tracer PRIVATE Qt6::Widgets Qt6::SvgWidgets)
 
 if(USE_OPENGL)
     target_link_libraries(pcb_tracer PRIVATE Qt6::OpenGLWidgets)
 endif()
 
-install(TARGETS pcb-tracer DESTINATION bin)
+install(TARGETS pcb_tracer DESTINATION bin)
