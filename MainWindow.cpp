@@ -64,6 +64,20 @@ MainWindow::MainWindow(QWidget* parent)
     pcbMenu->addAction(setBackSideImageAction);
 
     pcbMenu->addSeparator();
+
+    QAction* adjustFrontPerspectiveAction = new QAction("Adjust front image perspective", this);
+    connect(adjustFrontPerspectiveAction, &QAction::triggered, this, [this]() {
+        m_editor->enterImageTransformMode(LinkSide::FRONT);
+    });
+    pcbMenu->addAction(adjustFrontPerspectiveAction);
+
+    QAction* adjustBackPerspectiveAction = new QAction("Adjust back image perspective", this);
+    connect(adjustBackPerspectiveAction, &QAction::triggered, this, [this]() {
+        m_editor->enterImageTransformMode(LinkSide::BACK);
+    });
+    pcbMenu->addAction(adjustBackPerspectiveAction);
+
+    pcbMenu->addSeparator();
     QAction* openPreferencesAction = new QAction("Preferences", this);
     connect(openPreferencesAction, &QAction::triggered, this, &MainWindow::openConfigDialog);
     pcbMenu->addAction(openPreferencesAction);
@@ -316,7 +330,9 @@ void MainWindow::loadProjectFromFile(const QString& filePath, bool isAutoLoad) {
             setCurrentFilePath(originalFilePath);            
         }
         m_editor->showStatusMessage("Project loaded successfully.");
-        // QMessageBox::information(this, "Load Successful", "The project was loaded successfully.");
+        QGraphicsScene* scene = m_editor->getScene();
+        scene->setSceneRect(scene->itemsBoundingRect());
+        m_editor->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
     } else {
         QMessageBox::critical(this, "Load Failed", "Failed to load the project. Please check the file and try again.");
     }

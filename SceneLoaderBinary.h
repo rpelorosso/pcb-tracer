@@ -44,7 +44,7 @@ private:
     static Pad* readPadFromBinary(QDataStream& in);
     static void readLinkFromBinary(QDataStream& in, const QMap<int, Node*>& nodeMap);
     static void readNodeFromBinary(QDataStream& in, QMap<int, Node*>& nodeMap);
-    static void readImageLayerFromBinary(QDataStream& in);
+    static void readImageLayerFromBinary(QDataStream& in, qint32 version);
     static void readTextNoteFromBinary(QDataStream& in);
     static void readLastIds(QDataStream& in);
 

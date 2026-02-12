@@ -7,6 +7,8 @@
 #include <QGraphicsLineItem>
 #include "QGraphicsItemLayer.h"
 #include "NotesTool.h"
+#include "ImageTransformTool.h"
+#include "ImageLayer.h"
 
 Editor* Editor::m_instance = nullptr;
 
@@ -61,6 +63,7 @@ Editor::~Editor() {
 	delete m_tracingIndicator;
 	delete m_componentDrawingTool;
 	delete m_notesTool;
+	delete m_imageTransformTool;
 }
 
 
@@ -205,4 +208,16 @@ void Editor::enterNotesMode() {
 
 TrackDrawingTool *Editor::getTrackDrawingTool() {
     return m_trackDrawingTool;
+}
+
+void Editor::enterImageTransformMode(LinkSide side) {
+    int layerId = static_cast<int>(side);
+    ImageLayer* layer = findItemByIdAndClass<ImageLayer>(layerId);
+    if (!layer) {
+        showStatusMessage("No image loaded on that side.");
+        return;
+    }
+    delete m_imageTransformTool;
+    m_imageTransformTool = new ImageTransformTool(this, layer);
+    setCurrentTool(m_imageTransformTool);
 }

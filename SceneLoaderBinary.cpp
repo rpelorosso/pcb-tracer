@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QMessageBox>
+#include <array>
 #include "NotesTool.h"
 
 bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
@@ -28,8 +29,8 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
         // Read and check the version
         qint32 version;
         in >> version;
-        if (version != 1) {
-            qDebug() << "Unsupported file version";
+        if (version != 1 && version != 2) {
+            qDebug() << "Unsupported file version:" << version;
             return false;
         }
 
@@ -43,7 +44,7 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
             quint8 elementType;
             in >> elementType;
 
-            switch (static_cast<SceneElementType>(elementType)) 
+            switch (static_cast<SceneElementType>(elementType))
             {
                 case SceneElementType::Config:
                     readConfigFromBinary(in);
@@ -58,7 +59,7 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
                     readNodeFromBinary(in, nodeMap);
                     break;
                 case SceneElementType::ImageLayer:
-                    readImageLayerFromBinary(in);
+                    readImageLayerFromBinary(in, version);
                     break;
                 case SceneElementType::TextNote:
                     readTextNoteFromBinary(in);
@@ -109,7 +110,7 @@ bool SceneLoaderBinary::saveSceneToBinary(const QString& filename) {
         out.writeRawData("PCBTRC", 6);
 
         // Write the version number
-        out << (qint32)1;  // version 1
+        out << (qint32)2;  // version 2 - adds perspective corners
 
         writeLastIds(out);
 
@@ -205,6 +206,12 @@ void SceneLoaderBinary::writeImageLayerToBinary(QDataStream& out, ImageLayer* im
     out << (qint32)imageLayer->m_id << imageLayer->m_imagePath
         << imageLayer->pos().x() << imageLayer->pos().y()
         << imageLayer->opacity();
+
+    // v2: write perspective corners
+    out << (quint8)(imageLayer->m_hasPerspectiveTransform ? 1 : 0);
+    for (int i = 0; i < 4; ++i) {
+        out << imageLayer->m_corners[i].x() << imageLayer->m_corners[i].y();
+    }
 }
 
 void SceneLoaderBinary::writeTextNoteToBinary(QDataStream& out, TextNote* textNote) {
@@ -320,13 +327,31 @@ void SceneLoaderBinary::readLinkFromBinary(QDataStream& in, const QMap<int, Node
     }
 }
 
-void SceneLoaderBinary::readImageLayerFromBinary(QDataStream& in) {
+void SceneLoaderBinary::readImageLayerFromBinary(QDataStream& in, qint32 version) {
     qint32 id;
     QString imagePath;
     qreal x, y, opacity;
     in >> id >> imagePath >> x >> y >> opacity;
     qDebug() << "Reading image layer with ID" << id << "at" << x << "," << y << "opacity" << opacity << "image path" << imagePath;
     Editor::instance()->m_guideTool->setImageLayer(static_cast<LinkSide>(id), imagePath);
+
+    if (version >= 2) {
+        quint8 hasPerspective;
+        in >> hasPerspective;
+        qreal cx, cy;
+        std::array<QPointF, 4> corners;
+        for (int i = 0; i < 4; ++i) {
+            in >> cx >> cy;
+            corners[i] = QPointF(cx, cy);
+        }
+        if (hasPerspective) {
+            ImageLayer* layer = Editor::instance()->findItemByIdAndClass<ImageLayer>(id);
+            if (layer) {
+                layer->m_corners = corners;
+                layer->applyPerspectiveTransform();
+            }
+        }
+    }
 }
 
 void SceneLoaderBinary::readTextNoteFromBinary(QDataStream& in) {

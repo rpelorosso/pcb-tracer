@@ -36,6 +36,8 @@ add_executable(pcb_tracer
 	ComponentDrawingTool.h
 	NotesTool.cpp
 	NotesTool.h
+	ImageTransformTool.cpp
+	ImageTransformTool.h
 	IEditorTool.h
 	ImageLayer.cpp
 	ImageLayer.h
@@ -73,6 +75,8 @@ add_executable(pcb_tracer
 	actions/AssignSideToTrack.h
 	actions/AddComponent.cpp
 	actions/AddComponent.h
+	actions/AdjustPerspective.cpp
+	actions/AdjustPerspective.h
 	resources.qrc
 )
 

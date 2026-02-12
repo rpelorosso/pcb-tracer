@@ -33,6 +33,8 @@
 
 class ComponentDrawingTool;
 class NotesTool;
+class ImageTransformTool;
+class ImageLayer;
 
 class Editor : public ZoomableGraphicsView {
 	Q_OBJECT
@@ -56,6 +58,7 @@ public:
 	void enterComponentMode();
 	void enterTrackMode();
 	void enterNotesMode();
+	void enterImageTransformMode(LinkSide side);
 	void saveSceneToJson(const QString& filename);
 	void loadSceneFromJson(const QString& filename);
 	void setStatusBar(QStatusBar* statusBar);
@@ -107,6 +110,7 @@ private:
 	IEditorTool* m_currentTool;
 	TrackDrawingTool* m_trackDrawingTool;
 	ComponentDrawingTool* m_componentDrawingTool;
+	ImageTransformTool* m_imageTransformTool = nullptr;
 
 	QStatusBar* m_statusBar;
 	

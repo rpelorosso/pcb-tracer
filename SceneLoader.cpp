@@ -121,9 +121,21 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
         QJsonArray imageLayersArray = sceneData["image_layers"].toArray();
         for (const QJsonValue& imageLayerValue : imageLayersArray) {
             QJsonObject imageData = imageLayerValue.toObject();
-            //qDebug() << "id:" << static_cast<LinkSide>(imageData["id"].toInt());
-            editor->m_guideTool->setImageLayer(static_cast<LinkSide>(imageData["id"].toInt()),
-                                               imageData["image_path"].toString());                                           
+            LinkSide side = static_cast<LinkSide>(imageData["id"].toInt());
+            editor->m_guideTool->setImageLayer(side, imageData["image_path"].toString());
+
+            if (imageData.contains("corners")) {
+                int layerId = static_cast<int>(side);
+                ImageLayer* layer = editor->findItemByIdAndClass<ImageLayer>(layerId);
+                if (layer) {
+                    QJsonArray cornersArray = imageData["corners"].toArray();
+                    for (int i = 0; i < 4 && i < cornersArray.size(); ++i) {
+                        QJsonObject corner = cornersArray[i].toObject();
+                        layer->m_corners[i] = QPointF(corner["x"].toDouble(), corner["y"].toDouble());
+                    }
+                    layer->applyPerspectiveTransform();
+                }
+            }
         }
                                                
 
@@ -199,6 +211,16 @@ QJsonObject SceneLoader::getSceneElements() {
 				{"y", imageLayer->pos().y()}
 			};
 			imageData["opacity"] = imageLayer->opacity();
+			if (imageLayer->m_hasPerspectiveTransform) {
+				QJsonArray cornersArray;
+				for (int i = 0; i < 4; ++i) {
+					QJsonObject corner;
+					corner["x"] = imageLayer->m_corners[i].x();
+					corner["y"] = imageLayer->m_corners[i].y();
+					cornersArray.append(corner);
+				}
+				imageData["corners"] = cornersArray;
+			}
 			imageLayers.append(imageData);
 		} else if (auto node = dynamic_cast<Node*>(item)) {
 			if (!dynamic_cast<Pad*>(node)) {
