@@ -38,6 +38,8 @@ public:
     static int genNodeId();
     static int getLastNodeId();
     static void setNodeCount(int count);
+    void setSize(int size);
+    
     int m_id;
     std::optional<int> m_size;
 

@@ -18,6 +18,7 @@ Pad::Pad(const QString& name, int id, const QPointF& position, int number) : Nod
     setFlags(QGraphicsItem::ItemIsSelectable);
     m_showOnHover = false;
     setOpacity(1);
+    setSize(20);
 }
 
 Component::Component(const QString& name, int id) : m_name(name), m_id(id) {}
