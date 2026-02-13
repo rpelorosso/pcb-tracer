@@ -22,6 +22,9 @@ public:
     
     int m_linkWidth;
     int m_padSize;
+    int m_nodeSize;
+
+    QMap<Color, QString> m_colors;
 
 private:
     Config();
@@ -29,8 +32,6 @@ private:
     Config& operator=(const Config&) = delete;
 
     static Config* m_instance;
-
-    QMap<Color, QString> m_colors;
 
 };
 

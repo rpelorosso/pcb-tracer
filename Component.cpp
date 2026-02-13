@@ -7,6 +7,8 @@ int Component::s_componentCount = 0;
 PhantomPad::PhantomPad(const QString& name, const QPointF& position): Node(-1) {
     m_name = name;
     setPos(position);
+    setSize(Config::instance()->m_padSize);
+    setColor(Color::PAD);
     setFlags(QGraphicsItem::ItemIsSelectable);
     setOpacity(1);
     m_showOnHover = false;
@@ -18,7 +20,8 @@ Pad::Pad(const QString& name, int id, const QPointF& position, int number) : Nod
     setFlags(QGraphicsItem::ItemIsSelectable);
     m_showOnHover = false;
     setOpacity(1);
-    setSize(20);
+    setSize(Config::instance()->m_padSize);
+    setColor(Color::PAD);
 }
 
 Component::Component(const QString& name, int id) : m_name(name), m_id(id) {}

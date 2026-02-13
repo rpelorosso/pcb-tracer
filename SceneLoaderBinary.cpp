@@ -28,8 +28,8 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
         // Read and check the version
         qint32 version;
         in >> version;
-        if (version != 1) {
-            qDebug() << "Unsupported file version";
+        if (version < 1 || version > 3) {
+            qDebug() << "Unsupported file version:" << version;
             return false;
         }
 
@@ -46,7 +46,7 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
             switch (static_cast<SceneElementType>(elementType)) 
             {
                 case SceneElementType::Config:
-                    readConfigFromBinary(in);
+                    readConfigFromBinary(in, version);
                     break;
                 case SceneElementType::Component:
                     readComponentFromBinary(in, nodeMap);
@@ -109,7 +109,7 @@ bool SceneLoaderBinary::saveSceneToBinary(const QString& filename) {
         out.writeRawData("PCBTRC", 6);
 
         // Write the version number
-        out << (qint32)1;  // version 1
+        out << (qint32)3;  // version 3 - adds pad color to config
 
         writeLastIds(out);
 
@@ -234,11 +234,19 @@ void SceneLoaderBinary::writeConfigToBinary(QDataStream& out) {
     out << Config::instance()->color(Color::WIP);
     out << Config::instance()->m_linkWidth;
     out << Config::instance()->m_padSize;
+    out << Config::instance()->m_nodeSize;
+    out << Config::instance()->color(Color::PAD);
 }
 
 
-void SceneLoaderBinary::readConfigFromBinary(QDataStream& in) {
+void SceneLoaderBinary::readConfigFromBinary(QDataStream& in, qint32 version) {
     Config::instance()->readConfigFromBinary(in);
+    if (version >= 2) {
+        in >> Config::instance()->m_nodeSize;
+    }
+    if (version >= 3) {
+        in >> Config::instance()->m_colors[Color::PAD];
+    }
 }
 
 void SceneLoaderBinary::readNodeFromBinary(QDataStream& in, QMap<int, Node*>& nodeMap) {
