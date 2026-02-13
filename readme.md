@@ -27,6 +27,10 @@ Just download the portable version for Windows from the [releases page](https://
 
 Use the `pcb-tracer-git` package from the AUR.
 
+### Linux in General (AppImage)
+
+AppImage is available now to download from the [releases page](https://github.com/rpelorosso/pcb-tracer/releases).
+
 ## Compilation Instructions
 
 ### On Arch Linux:
