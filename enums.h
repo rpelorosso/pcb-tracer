@@ -25,6 +25,7 @@ enum class Color {
 	WIP,
 	NOTES,
 	NODE,
+	PAD,
 	HIGHLIGHTED,
 };
 
@@ -36,6 +37,7 @@ namespace ColorUtils {
             case Color::WIP: return "work_in_progress";
             case Color::NOTES: return "notes";
             case Color::NODE: return "node";
+            case Color::PAD: return "pad";
             case Color::HIGHLIGHTED: return "highlighted";
             default: return "unknown";
         }
@@ -47,6 +49,7 @@ namespace ColorUtils {
         if (str == "work_in_progress") return Color::WIP;
         if (str == "notes") return Color::NOTES;
         if (str == "node") return Color::NODE;
+        if (str == "pad") return Color::PAD;
         if (str == "highlighted") return Color::HIGHLIGHTED;
         qDebug() << "Warning: LinkSideUtils::fromString received unknown string: " << str;
         return Color::FRONT;

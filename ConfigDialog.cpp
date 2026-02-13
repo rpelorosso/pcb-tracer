@@ -37,8 +37,18 @@ ConfigDialog::ConfigDialog(QWidget *parent)
     padRadiusLayout->addWidget(m_padRadiusSpinBox);
     mainLayout->addLayout(padRadiusLayout);
 
+    // Node Size input
+    QHBoxLayout *nodeSizeLayout = new QHBoxLayout();
+    QLabel *nodeSizeLabel = new QLabel("Node Size:");
+    m_nodeSizeSpinBox = new QSpinBox();
+    m_nodeSizeSpinBox->setRange(1, 100);
+    m_nodeSizeSpinBox->setValue(Config::instance()->m_nodeSize);
+    nodeSizeLayout->addWidget(nodeSizeLabel);
+    nodeSizeLayout->addWidget(m_nodeSizeSpinBox);
+    mainLayout->addLayout(nodeSizeLayout);
+
     // Color pickers
-    QList<Color> colors = {Color::FRONT, Color::BACK, Color::WIP, Color::HIGHLIGHTED, Color::NODE};
+    QList<Color> colors = {Color::FRONT, Color::BACK, Color::WIP, Color::HIGHLIGHTED, Color::NODE, Color::PAD};
     for (const auto &color : colors) {
         QHBoxLayout *colorLayout = new QHBoxLayout();
         QLabel *colorLabel = new QLabel(QString("%1 Color:").arg(ColorUtils::toString(color)));
@@ -85,6 +95,7 @@ QVariantMap ConfigDialog::getConfigData() const
     QVariantMap data;
     data["link_width"] = m_trackWidthSpinBox->value();
     data["pad_size"] = m_padRadiusSpinBox->value();
+    data["node_size"] = m_nodeSizeSpinBox->value();
     
     QVariantMap colors;
 

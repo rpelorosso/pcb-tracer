@@ -37,6 +37,11 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
         // Clear the current scene
 //        editor->clean();
 
+        if (sceneData.contains("config")) {
+            QVariantMap configMap = sceneData["config"].toObject().toVariantMap();
+            Config::instance()->updateFromConfigDialog(configMap);
+        }
+
         QMap<int, Node*> nodes;
         int maxNodeId = 0;
         int maxGraphId = 0;
@@ -94,8 +99,8 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
             Node* fromNode = nodes[linkData["from_node_id"].toInt()];
             Node* toNode = nodes[linkData["to_node_id"].toInt()];
             Link* link = new Link(linkData["id"].toInt());
-            //link->setWidth(linkData["width"].toDouble());
-            //link->setWidth(10);
+            if (linkData.contains("width"))
+                link->m_width = linkData["width"].toInt();
             link->setFromNode(fromNode);
             link->setToNode(toNode);
             editor->scene()->addItem(link);
@@ -188,7 +193,8 @@ QJsonObject SceneLoader::getSceneElements() {
 			linkData["to_node_id"] = link->toNode()->m_id;
 			linkData["graph_id"] = link->m_graphId;
 			linkData["side"] = LinkSideUtils::toString(link->m_side); //static_cast<int>(link->m_side);
-			linkData["width"] = 2; //link->getWidth();
+			if (link->m_width.has_value())
+				linkData["width"] = link->m_width.value();
 			links.append(linkData);
 		} else if (auto imageLayer = dynamic_cast<ImageLayer*>(item)) {
 			QJsonObject imageData;
@@ -230,6 +236,7 @@ QJsonObject SceneLoader::getSceneElements() {
 	sceneData["nodes"] = nodes;
 	sceneData["image_layers"] = imageLayers;
 	sceneData["notes"] = notes;
+	sceneData["config"] = QJsonObject::fromVariantMap(Config::instance()->toDict());
 
 	return sceneData;
 }

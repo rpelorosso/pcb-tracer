@@ -25,6 +25,7 @@ private:
     QLineEdit *m_inputField;
     QSpinBox *m_trackWidthSpinBox;
     QDoubleSpinBox *m_padRadiusSpinBox;
+    QSpinBox *m_nodeSizeSpinBox;
     QMap<Color, QPushButton*> m_colorButtons;
     QMap<Color, QString> m_buttonColors;
     QPushButton *m_nodeColorButton;

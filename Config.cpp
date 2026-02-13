@@ -22,28 +22,31 @@ Config::Config() {
         {Color::WIP, "#00FFFF"},
         {Color::NOTES, "#FFFFFF"},
         {Color::HIGHLIGHTED, "#FFFFFF"},
-        {Color::NODE, "#00FF00"}
+        {Color::NODE, "#00FF00"},
+        {Color::PAD, "#ff007f"}
     };
 
     // Initialize other default settings
     m_linkWidth = 6;
-    m_padSize = 12;
+    m_padSize = 17;
+    m_nodeSize = 13;
 }
 
 void Config::apply() {
-    int nodeRadius = m_padSize / 2;
     for (QGraphicsItem* item : Editor::instance()->scene()->items()) {
         if (auto* link = dynamic_cast<Link*>(item)) {
+            link->m_width.reset();
             link->setColor(ColorUtils::fromLinkSide(link->m_side));
-            //link->setPen(QPen(QColor(color(ColorUtils::fromLinkSide(link->m_side))), m_linkWidth));
-        } else if (auto* node = dynamic_cast<Node*>(item)) {
-            node->setColor(Color::NODE);
         } else if (auto* pad = dynamic_cast<Pad*>(item)) {
+            pad->setSize(m_padSize);
+            pad->setColor(Color::PAD);
+        } else if (auto* node = dynamic_cast<Node*>(item)) {
+            node->setSize(m_nodeSize);
             node->setColor(Color::NODE);
         }
     }
     // trigger re-rendering of color box
-    Editor::instance()->setCurrentSide(Editor::instance()->m_currentSide); 
+    Editor::instance()->setCurrentSide(Editor::instance()->m_currentSide);
 }
 
 void Config::updateFromConfigDialog(const QVariantMap& dialogConfig) {
@@ -57,6 +60,8 @@ void Config::updateFromConfigDialog(const QVariantMap& dialogConfig) {
     // Update other settings
     m_linkWidth = dialogConfig["link_width"].toInt();
     m_padSize = dialogConfig["pad_size"].toInt();
+    if (dialogConfig.contains("node_size"))
+        m_nodeSize = dialogConfig["node_size"].toInt();
 }
 
 void Config::readConfigFromBinary(QDataStream& in) {
@@ -82,10 +87,11 @@ QVariantMap Config::toDict() const {
     QVariantMap result;
     QVariantMap colorMap;
     for (auto it = m_colors.begin(); it != m_colors.end(); ++it) {
-        colorMap[QString::number(static_cast<int>(it.key()))] = it.value();
+        colorMap[ColorUtils::toString(it.key())] = it.value();
     }
     result["colors"] = colorMap;
     result["link_width"] = m_linkWidth;
     result["pad_size"] = m_padSize;
+    result["node_size"] = m_nodeSize;
     return result;
 }

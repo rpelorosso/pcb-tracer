@@ -39,7 +39,7 @@ private:
     static void writeLastIds(QDataStream& out);
     static void writeConfigToBinary(QDataStream& out);
 
-    static void readConfigFromBinary(QDataStream& in);
+    static void readConfigFromBinary(QDataStream& in, qint32 version);
     static void readComponentFromBinary(QDataStream& in, QMap<int, Node*>& nodeMap);
     static Pad* readPadFromBinary(QDataStream& in);
     static void readLinkFromBinary(QDataStream& in, const QMap<int, Node*>& nodeMap);
