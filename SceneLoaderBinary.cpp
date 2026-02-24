@@ -28,7 +28,7 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
         // Read and check the version
         qint32 version;
         in >> version;
-        if (version < 1 || version > 3) {
+        if (version < 1 || version > 4) {
             qDebug() << "Unsupported file version:" << version;
             return false;
         }
@@ -58,7 +58,7 @@ bool SceneLoaderBinary::loadSceneFromBinary(const QString& filename) {
                     readNodeFromBinary(in, nodeMap);
                     break;
                 case SceneElementType::ImageLayer:
-                    readImageLayerFromBinary(in);
+                    readImageLayerFromBinary(in, version);
                     break;
                 case SceneElementType::TextNote:
                     readTextNoteFromBinary(in);
@@ -109,7 +109,7 @@ bool SceneLoaderBinary::saveSceneToBinary(const QString& filename) {
         out.writeRawData("PCBTRC", 6);
 
         // Write the version number
-        out << (qint32)3;  // version 3 - adds pad color to config
+        out << (qint32)4;  // version 4 - adds image layer transform
 
         writeLastIds(out);
 
@@ -205,6 +205,12 @@ void SceneLoaderBinary::writeImageLayerToBinary(QDataStream& out, ImageLayer* im
     out << (qint32)imageLayer->m_id << imageLayer->m_imagePath
         << imageLayer->pos().x() << imageLayer->pos().y()
         << imageLayer->opacity();
+
+    // v4: write transform matrix (9 values)
+    QTransform t = imageLayer->transform();
+    out << t.m11() << t.m12() << t.m13()
+        << t.m21() << t.m22() << t.m23()
+        << t.m31() << t.m32() << t.m33();
 }
 
 void SceneLoaderBinary::writeTextNoteToBinary(QDataStream& out, TextNote* textNote) {
@@ -328,13 +334,21 @@ void SceneLoaderBinary::readLinkFromBinary(QDataStream& in, const QMap<int, Node
     }
 }
 
-void SceneLoaderBinary::readImageLayerFromBinary(QDataStream& in) {
+void SceneLoaderBinary::readImageLayerFromBinary(QDataStream& in, qint32 version) {
     qint32 id;
     QString imagePath;
     qreal x, y, opacity;
     in >> id >> imagePath >> x >> y >> opacity;
     qDebug() << "Reading image layer with ID" << id << "at" << x << "," << y << "opacity" << opacity << "image path" << imagePath;
     Editor::instance()->m_guideTool->setImageLayer(static_cast<LinkSide>(id), imagePath);
+
+    if (version >= 4) {
+        qreal m11, m12, m13, m21, m22, m23, m31, m32, m33;
+        in >> m11 >> m12 >> m13 >> m21 >> m22 >> m23 >> m31 >> m32 >> m33;
+        QTransform transform(m11, m12, m13, m21, m22, m23, m31, m32, m33);
+        ImageLayer* layer = Editor::instance()->findItemByIdAndClass<ImageLayer>(id);
+        if (layer) layer->setTransform(transform);
+    }
 }
 
 void SceneLoaderBinary::readTextNoteFromBinary(QDataStream& in) {

@@ -7,6 +7,7 @@
 #include <QGraphicsLineItem>
 #include "QGraphicsItemLayer.h"
 #include "NotesTool.h"
+#include "LayerAlignmentTool.h"
 
 Editor* Editor::m_instance = nullptr;
 
@@ -27,6 +28,7 @@ Editor::Editor(QWidget* parent) : ZoomableGraphicsView(parent) {
     m_trackDrawingTool = new TrackDrawingTool(this);
 	m_componentDrawingTool = new ComponentDrawingTool();
 	m_notesTool = new NotesTool(this);
+	m_layerAlignmentTool = new LayerAlignmentTool(this);
     m_currentTool = m_trackDrawingTool;
 	m_currentSide = LinkSide::FRONT;
 	m_state = DrawingState::TRACKS;
@@ -61,6 +63,7 @@ Editor::~Editor() {
 	delete m_tracingIndicator;
 	delete m_componentDrawingTool;
 	delete m_notesTool;
+	delete m_layerAlignmentTool;
 }
 
 
@@ -154,6 +157,9 @@ void Editor::showStatusMessage(const QString& message)
 }
 
 void Editor::clean() {
+    // Reset to track mode first so any active tool (e.g. alignment with markers) cleans up
+    enterTrackMode();
+
     m_undoStack.clear();
     TrackGraph::setTrackGraphCount(0);
     Link::setLinkCount(0);
@@ -201,6 +207,10 @@ void Editor::enterComponentMode() {
 void Editor::enterNotesMode() {
 	m_state = DrawingState::NOTES;
 	setCurrentTool(m_notesTool);
+}
+
+void Editor::enterLayerAlignmentMode() {
+	setCurrentTool(m_layerAlignmentTool);
 }
 
 TrackDrawingTool *Editor::getTrackDrawingTool() {

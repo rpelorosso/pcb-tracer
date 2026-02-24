@@ -73,6 +73,10 @@ add_executable(pcb_tracer
 	actions/AssignSideToTrack.h
 	actions/AddComponent.cpp
 	actions/AddComponent.h
+	actions/AlignLayer.cpp
+	actions/AlignLayer.h
+	LayerAlignmentTool.cpp
+	LayerAlignmentTool.h
 	resources.qrc
 )
 

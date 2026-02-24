@@ -126,9 +126,20 @@ bool SceneLoader::loadSceneFromJson(const QString& filename)
         QJsonArray imageLayersArray = sceneData["image_layers"].toArray();
         for (const QJsonValue& imageLayerValue : imageLayersArray) {
             QJsonObject imageData = imageLayerValue.toObject();
-            //qDebug() << "id:" << static_cast<LinkSide>(imageData["id"].toInt());
-            editor->m_guideTool->setImageLayer(static_cast<LinkSide>(imageData["id"].toInt()),
-                                               imageData["image_path"].toString());                                           
+            LinkSide side = static_cast<LinkSide>(imageData["id"].toInt());
+            editor->m_guideTool->setImageLayer(side, imageData["image_path"].toString());
+
+            if (imageData.contains("transform")) {
+                QJsonArray t = imageData["transform"].toArray();
+                if (t.size() == 9) {
+                    QTransform transform(
+                        t[0].toDouble(), t[1].toDouble(), t[2].toDouble(),
+                        t[3].toDouble(), t[4].toDouble(), t[5].toDouble(),
+                        t[6].toDouble(), t[7].toDouble(), t[8].toDouble());
+                    ImageLayer* layer = editor->findItemByIdAndClass<ImageLayer>(imageData["id"].toInt());
+                    if (layer) layer->setTransform(transform);
+                }
+            }
         }
                                                
 
@@ -205,6 +216,14 @@ QJsonObject SceneLoader::getSceneElements() {
 				{"y", imageLayer->pos().y()}
 			};
 			imageData["opacity"] = imageLayer->opacity();
+			if (!imageLayer->transform().isIdentity()) {
+				QTransform t = imageLayer->transform();
+				imageData["transform"] = QJsonArray{
+					t.m11(), t.m12(), t.m13(),
+					t.m21(), t.m22(), t.m23(),
+					t.m31(), t.m32(), t.m33()
+				};
+			}
 			imageLayers.append(imageData);
 		} else if (auto node = dynamic_cast<Node*>(item)) {
 			if (!dynamic_cast<Pad*>(node)) {
