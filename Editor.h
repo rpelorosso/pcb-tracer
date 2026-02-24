@@ -33,6 +33,7 @@
 
 class ComponentDrawingTool;
 class NotesTool;
+class LayerAlignmentTool;
 
 class Editor : public ZoomableGraphicsView {
 	Q_OBJECT
@@ -56,6 +57,7 @@ public:
 	void enterComponentMode();
 	void enterTrackMode();
 	void enterNotesMode();
+	void enterLayerAlignmentMode();
 	void saveSceneToJson(const QString& filename);
 	void loadSceneFromJson(const QString& filename);
 	void setStatusBar(QStatusBar* statusBar);
@@ -107,6 +109,7 @@ private:
 	IEditorTool* m_currentTool;
 	TrackDrawingTool* m_trackDrawingTool;
 	ComponentDrawingTool* m_componentDrawingTool;
+	LayerAlignmentTool* m_layerAlignmentTool;
 
 	QStatusBar* m_statusBar;
 	

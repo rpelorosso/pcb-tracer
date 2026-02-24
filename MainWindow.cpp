@@ -13,6 +13,8 @@
 #include "SceneLoaderBinary.h"
 #include "ConfigDialog.h"
 #include "ConnectionAnalyzer.h"
+#include "ImageLayer.h"
+#include "actions/AlignLayer.h"
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -55,23 +57,33 @@ MainWindow::MainWindow(QWidget* parent)
     QMenu* viewMenu = menuBar->addMenu("View");
 
     // Add menu actions
-    QAction* setFrontSideImageAction = new QAction("Set front side image", this);
-    connect(setFrontSideImageAction, &QAction::triggered, this, &MainWindow::setFrontSideImage);
-    pcbMenu->addAction(setFrontSideImageAction);
+    m_setFrontImageAction = new QAction("Set front side image", this);
+    connect(m_setFrontImageAction, &QAction::triggered, this, &MainWindow::setFrontSideImage);
+    pcbMenu->addAction(m_setFrontImageAction);
 
-    QAction* setBackSideImageAction = new QAction("Set back side image", this);
-    connect(setBackSideImageAction, &QAction::triggered, this, &MainWindow::setBackSideImage);
-    pcbMenu->addAction(setBackSideImageAction);
+    m_setBackImageAction = new QAction("Set back side image", this);
+    connect(m_setBackImageAction, &QAction::triggered, this, &MainWindow::setBackSideImage);
+    pcbMenu->addAction(m_setBackImageAction);
 
     pcbMenu->addSeparator();
-    QAction* openPreferencesAction = new QAction("Preferences", this);
-    connect(openPreferencesAction, &QAction::triggered, this, &MainWindow::openConfigDialog);
-    pcbMenu->addAction(openPreferencesAction);
+
+    QAction* alignLayersAction = new QAction("Align layers", this);
+    connect(alignLayersAction, &QAction::triggered, m_editor, &Editor::enterLayerAlignmentMode);
+    pcbMenu->addAction(alignLayersAction);
+
+    QAction* resetAlignmentAction = new QAction("Reset layer alignment", this);
+    connect(resetAlignmentAction, &QAction::triggered, this, &MainWindow::resetLayerAlignment);
+    pcbMenu->addAction(resetAlignmentAction);
 
     pcbMenu->addSeparator();
     QAction* viewConnectionsAction = new QAction("View Connections", this);
     connect(viewConnectionsAction, &QAction::triggered, this, &MainWindow::viewConnections);
     pcbMenu->addAction(viewConnectionsAction);
+
+    pcbMenu->addSeparator();
+    QAction* openPreferencesAction = new QAction("Preferences", this);
+    connect(openPreferencesAction, &QAction::triggered, this, &MainWindow::openConfigDialog);
+    pcbMenu->addAction(openPreferencesAction);
 
     QAction* newAction = new QAction("New", this);
     connect(newAction, &QAction::triggered, this, &MainWindow::newProject);
@@ -88,6 +100,11 @@ MainWindow::MainWindow(QWidget* parent)
     QAction* saveAsAction = new QAction("Save As", this);
     connect(saveAsAction, &QAction::triggered, this, &MainWindow::saveProjectAs);
     fileMenu->addAction(saveAsAction);
+
+    fileMenu->addSeparator();
+    loadRecentFiles();
+    m_recentFilesMenu = fileMenu->addMenu("Recent Files  ");
+    updateRecentFilesMenu();
 
     fileMenu->addSeparator();
 
@@ -184,9 +201,26 @@ void MainWindow::viewConnections() {
     ConnectionAnalyzer::getConnections();
 }
 
+void MainWindow::resetLayerAlignment() {
+    auto resetLayer = [this](LinkSide side) {
+        ImageLayer* layer = m_editor->findItemByIdAndClass<ImageLayer>(static_cast<int>(side));
+        if (layer && !layer->transform().isIdentity()) {
+            AlignLayerMeta meta;
+            meta.layerId = static_cast<int>(side);
+            meta.oldTransform = layer->transform();
+            meta.newTransform = QTransform();
+            m_editor->m_undoStack.push(new AlignLayer(meta));
+        }
+    };
+    resetLayer(LinkSide::FRONT);
+    resetLayer(LinkSide::BACK);
+    m_editor->showStatusMessage("Layer alignment reset.");
+}
+
 void MainWindow::cleanProject() {
     Editor::instance()->clean();
     setCurrentFilePath("");
+    updateImageMenuText();
 }
 
 bool MainWindow::promptForUnsavedChanges() {
@@ -247,11 +281,12 @@ void MainWindow::saveToFile(const QString& filePath, bool isAutoSave)
     }
 
     if (success) {
-        if (!isAutoSave) {            
+        if (!isAutoSave) {
             setCurrentFilePath(actualFilePath);
             m_wasJustAutosaved = false; // so we don't prompt for unsaved changes due to have loaded an autosave
             Editor::instance()->m_undoStack.setClean();
             m_editor->showStatusMessage("Project saved successfully.");
+            addToRecentFiles(actualFilePath);
         }
     } else {
         QMessageBox::critical(this, "Save Failed", "Failed to save the project. Please try again.");
@@ -316,7 +351,8 @@ void MainWindow::loadProjectFromFile(const QString& filePath, bool isAutoLoad) {
             setCurrentFilePath(originalFilePath);            
         }
         m_editor->showStatusMessage("Project loaded successfully.");
-        // QMessageBox::information(this, "Load Successful", "The project was loaded successfully.");
+        updateImageMenuText();
+        addToRecentFiles(m_currentFilePath);
     } else {
         QMessageBox::critical(this, "Load Failed", "Failed to load the project. Please check the file and try again.");
     }
@@ -327,16 +363,18 @@ void MainWindow::setFrontSideImage()
     QString filePath = QFileDialog::getOpenFileName(this, "Open Image");
     if (!filePath.isEmpty()) {
         m_editor->m_guideTool->setImageLayer(LinkSide::FRONT, filePath);
+        QFileInfo fi(filePath);
+        m_setFrontImageAction->setText("Set front side image (" + fi.fileName() + ")");
     }
-
 }
 
-void MainWindow::setBackSideImage() {    
+void MainWindow::setBackSideImage() {
     QString filePath = QFileDialog::getOpenFileName(this, "Open Image");
     if (!filePath.isEmpty()) {
         m_editor->m_guideTool->setImageLayer(LinkSide::BACK, filePath);
+        QFileInfo fi(filePath);
+        m_setBackImageAction->setText("Set back side image (" + fi.fileName() + ")");
     }
-
 }
 
 void MainWindow::createToolbarActions()
@@ -547,6 +585,76 @@ void MainWindow::autoSaveProject() {
     QString tempFilePath = getAutosaveFilePath(m_currentFilePath);
     m_changesSinceLastAutosave = false; // reset the changes flag
     saveToFile(tempFilePath, true); // save to file as autosave
+}
+
+void MainWindow::updateImageMenuText() {
+    auto updateAction = [this](QAction* action, const QString& base, LinkSide side) {
+        ImageLayer* layer = m_editor->findItemByIdAndClass<ImageLayer>(static_cast<int>(side));
+        if (layer && !layer->m_imagePath.isEmpty()) {
+            QFileInfo fi(layer->m_imagePath);
+            action->setText(base + " (" + fi.fileName() + ")");
+        } else {
+            action->setText(base);
+        }
+    };
+    updateAction(m_setFrontImageAction, "Set front side image", LinkSide::FRONT);
+    updateAction(m_setBackImageAction, "Set back side image", LinkSide::BACK);
+}
+
+void MainWindow::loadRecentFiles() {
+    QSettings settings("PCBTracer", "PCBTracer");
+    m_recentFiles = settings.value("recentFiles").toStringList();
+}
+
+void MainWindow::saveRecentFiles() {
+    QSettings settings("PCBTracer", "PCBTracer");
+    settings.setValue("recentFiles", m_recentFiles);
+}
+
+void MainWindow::addToRecentFiles(const QString& filePath) {
+    m_recentFiles.removeAll(filePath);
+    m_recentFiles.prepend(filePath);
+    while (m_recentFiles.size() > MaxRecentFiles)
+        m_recentFiles.removeLast();
+    saveRecentFiles();
+    updateRecentFilesMenu();
+}
+
+void MainWindow::updateRecentFilesMenu() {
+    m_recentFilesMenu->clear();
+    if (m_recentFiles.isEmpty()) {
+        QAction* emptyAction = m_recentFilesMenu->addAction("No recent files");
+        emptyAction->setEnabled(false);
+        return;
+    }
+    for (const QString& filePath : m_recentFiles) {
+        QFileInfo fi(filePath);
+        QAction* action = m_recentFilesMenu->addAction(fi.fileName());
+        action->setData(filePath);
+        action->setToolTip(filePath);
+        connect(action, &QAction::triggered, this, &MainWindow::openRecentFile);
+    }
+}
+
+void MainWindow::openRecentFile() {
+    QAction* action = qobject_cast<QAction*>(sender());
+    if (!action) return;
+
+    QString filePath = action->data().toString();
+    if (!QFile::exists(filePath)) {
+        QMessageBox::warning(this, "File Not Found",
+            QString("The file \"%1\" no longer exists.").arg(filePath));
+        m_recentFiles.removeAll(filePath);
+        saveRecentFiles();
+        updateRecentFilesMenu();
+        return;
+    }
+
+    if (promptForUnsavedChanges()) {
+        if (!checkAndLoadAutosave(filePath)) {
+            loadProjectFromFile(filePath);
+        }
+    }
 }
 
 void MainWindow::showEvent(QShowEvent* event) {

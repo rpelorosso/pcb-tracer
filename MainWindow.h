@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QUndoStack>
+#include <QSettings>
 #include "Editor.h"
 #include "ColorBox.h"
 #include "Sidebar.h"
@@ -37,6 +38,7 @@ private slots:
     void setFrontSideImage();
     void setBackSideImage();
     void viewConnections();
+    void resetLayerAlignment();
     void addTrackButtonAction(bool checked);
     void addComponentButtonAction(bool checked);
     void addNotesButtonAction(bool checked);
@@ -51,6 +53,7 @@ private slots:
     void newProject();
 
     void autoSaveProject();
+    void openRecentFile();
 
 private:
     QString m_windowBaseTitle;
@@ -72,6 +75,11 @@ private:
     QAction* m_backSideAction;
     QAction* m_flipHAction;
     QAction* m_flipVAction;
+    QAction* m_setFrontImageAction;
+    QAction* m_setBackImageAction;
+    QMenu* m_recentFilesMenu;
+    QStringList m_recentFiles;
+    static const int MaxRecentFiles = 10;
 
     bool checkAndLoadAutosave(QString originalFilePath);
     void loadProjectFromFile(const QString& filePath, bool isAutoLoad = false);    
@@ -82,4 +90,9 @@ private:
     bool promptForUnsavedChanges();
     void removeAutosaveFile();
     void renameToAutosaveFile(QString filePath);
+    void updateImageMenuText();
+    void addToRecentFiles(const QString& filePath);
+    void updateRecentFilesMenu();
+    void loadRecentFiles();
+    void saveRecentFiles();
 };
